@@ -25,6 +25,8 @@ class Matter_Plugin_Device end
 #@ solidify:Matter_Plugin_Sensor,weak
 
 class Matter_Plugin_Sensor : Matter_Plugin_Device
+  static var ARG  = "filter"                        # additional argument name (or empty if none)
+  static var UPDATE_TIME = 5000                     # update sensor every 5s
   var tasmota_sensor_filter                         # Rule-type filter to the value, like "ESP32#Temperature"
   var tasmota_sensor_matcher                        # Actual matcher object
   var shadow_value                                  # Last known value
@@ -33,7 +35,7 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   # Constructor
   def init(device, endpoint, arguments)
     super(self).init(device, endpoint, arguments)
-    self.tasmota_sensor_filter = arguments.find('filter')
+    self.tasmota_sensor_filter = arguments.find(self.ARG#-'filter'-#)
     if self.tasmota_sensor_filter
       self.tasmota_sensor_matcher = tasmota.Rule_Matcher.parse(self.tasmota_sensor_filter)
     end
@@ -49,7 +51,7 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
       var val = self.pre_value(real(self.tasmota_sensor_matcher.match(payload)))
       if val != nil
         if val != self.shadow_value
-          self.valued_changed(val)
+          self.value_changed(val)
         end
         self.shadow_value = val
       end
@@ -60,9 +62,9 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   # Called when the value changed compared to shadow value
   #
   # This must be overriden.
-  # This is where you call `self.attribute_updated(nil, <cluster>, <attribute>)`
-  def valued_changed(val)
-    # self.attribute_updated(nil, 0x0402, 0x0000)
+  # This is where you call `self.attribute_updated(<cluster>, <attribute>)`
+  def value_changed(val)
+    # self.attribute_updated(0x0402, 0x0000)
   end
 
   #############################################################
@@ -72,17 +74,6 @@ class Matter_Plugin_Sensor : Matter_Plugin_Device
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
     return val
-  end
-
-  #############################################################
-  # to_json_parameters
-  #
-  # To be overriden.
-  # returns a json sub-string to add after endpoint and type name
-  def to_json_parameters(s)
-    import string
-    s += string.format(',"filter":"%s"', self.tasmota_sensor_filter)
-    return s
   end
 
 end

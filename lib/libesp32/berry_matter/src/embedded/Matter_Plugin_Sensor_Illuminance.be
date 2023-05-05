@@ -25,7 +25,8 @@ class Matter_Plugin_Sensor end
 #@ solidify:Matter_Plugin_Sensor_Illuminance,weak
 
 class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
-  static var NAME = "illuminance"                   # name of the plug-in in json
+  static var TYPE = "illuminance"                   # name of the plug-in in json
+  static var NAME = "Illuminance"                   # display name of the plug-in
   static var CLUSTERS  = {
     0x0400: [0,1,2,0xFFFC,0xFFFD],                  # Illuminance Measurement p.95 - no writable
   }
@@ -37,16 +38,16 @@ class Matter_Plugin_Sensor_Illuminance : Matter_Plugin_Sensor
   # This must be overriden.
   # This allows to convert the raw sensor value to the target one, typically int
   def pre_value(val)
-    return int(val)         # value in lux
+    return val != nil ? int(val) : nil        # value in lux
   end
 
   #############################################################
   # Called when the value changed compared to shadow value
   #
   # This must be overriden.
-  # This is where you call `self.attribute_updated(nil, <cluster>, <attribute>)`
-  def valued_changed(val)
-    self.attribute_updated(nil, 0x0400, 0x0000)
+  # This is where you call `self.attribute_updated(<cluster>, <attribute>)`
+  def value_changed(val)
+    self.attribute_updated(0x0400, 0x0000)
   end
 
   #############################################################

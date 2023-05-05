@@ -113,13 +113,17 @@ The latter links can be used for OTA upgrades too like ``OtaUrl https://ota.tasm
 ## Changelog v12.5.0.1
 ### Added
 - Command ``SetOption152 0/1`` to select two (0 = default) pin bistable or one (1) pin latching relay control [#18386](https://github.com/arendst/Tasmota/issues/18386)
+- Support for TC74 temperature sensor by Michael Loftis [#18042](https://github.com/arendst/Tasmota/issues/18042)
 - Matter sensors Humidity, Pressure, Illuminance [#18441](https://github.com/arendst/Tasmota/issues/18441)
 - Matter allow `Matter#Initialized` rule once the device is configured [#18451](https://github.com/arendst/Tasmota/issues/18451)
+- Matter UI to change endpoints configuration [#18498](https://github.com/arendst/Tasmota/issues/18498)
+- Matter support for Shutters (without Tilt) [#18509](https://github.com/arendst/Tasmota/issues/18509)
 
 ### Breaking Changed
 
 ### Changed
 - ESP32 Framework (Core) from v2.0.7 to v2.0.8
+- Refactored Zero Cross Dimmer [#18481](https://github.com/arendst/Tasmota/issues/18481)
 
 ### Fixed
 - ESP8266 Energy Export Active no update regression from v12.3.1.3

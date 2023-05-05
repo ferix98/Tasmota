@@ -21,20 +21,21 @@
 
 class Matter_Device
   static var UDP_PORT = 5540          # this is the default port for group multicast, we also use it for unicast
-  static var PASSCODE_DEFAULT = 20202021
   static var PBKDF_ITERATIONS = 1000  # I don't see any reason to choose a different number
   static var VENDOR_ID = 0xFFF1
   static var PRODUCT_ID = 0x8000
   static var FILENAME = "_matter_device.json"
   static var PASE_TIMEOUT = 10*60     # default open commissioning window (10 minutes)
   var started                         # is the Matter Device started (configured, mDNS and UDPServer started)
-  var plugins                         # list of plugins
+  var plugins                         # list of plugins instances
   var plugins_persist                 # true if plugins configuration needs to be saved
   var plugins_classes                 # map of registered classes by type name
+  var plugins_config                  # map of JSON configuration for plugins
   var udp_server                      # `matter.UDPServer()` object
   var message_handler                 # `matter.MessageHandler()` object
   var sessions                        # `matter.Session_Store()` objet
   var ui
+  var tick                            # increment at each tick, avoids to repeat too frequently some actions
   # Commissioning open
   var commissioning_open              # timestamp for timeout of commissioning (millis()) or `nil` if closed
   var commissioning_iterations        # current PBKDF number of iterations
@@ -74,6 +75,7 @@ class Matter_Device
     end    # abort if SetOption 151 is not set
 
     self.started = false
+    self.tick = 0
     self.plugins = []
     self.plugins_persist = false                  # plugins need to saved only when the first fabric is associated
     self.plugins_classes = {}
@@ -295,10 +297,16 @@ class Matter_Device
     if self.commissioning_open != nil && tasmota.time_reached(self.commissioning_open)    # timeout reached, close provisioning
       self.commissioning_open = nil
     end
-    # call all plugins
+  end
+
+  #############################################################
+  # dispatch every 250ms to all plugins
+  def every_250ms()
+    self.message_handler.every_250ms()
+    # call all plugins, use a manual loop to avoid creating a new object
     var idx = 0
     while idx < size(self.plugins)
-      self.plugins[idx].every_second()
+      self.plugins[idx].every_250ms()
       idx += 1
     end
   end
@@ -327,9 +335,9 @@ class Matter_Device
   end
 
   #############################################################
-  # dispatch every 250ms click to sub-objects that need it
-  def every_250ms()
-    self.message_handler.every_250ms()
+  # ticks
+  def every_50ms()
+    self.tick += 1
   end
 
   #############################################################
@@ -600,10 +608,11 @@ class Matter_Device
   # 
   def save_param()
     import string
+    import json
     var j = string.format('{"distinguish":%i,"passcode":%i,"ipv4only":%s', self.root_discriminator, self.root_passcode, self.ipv4only ? 'true':'false')
     if self.plugins_persist
       j += ',"config":'
-      j += self.plugins_to_json()
+      j += json.dump(self.plugins_config)
     end
     j += '}'
     try
@@ -635,9 +644,9 @@ class Matter_Device
       self.root_discriminator = j.find("distinguish", self.root_discriminator)
       self.root_passcode = j.find("passcode", self.root_passcode)
       self.ipv4only = bool(j.find("ipv4only", false))
-      var config = j.find("config")
-      if config
-        self._load_plugins_config(config)
+      self.plugins_config = j.find("config")
+      if self.plugins_config
+        self._load_plugins_config(self.plugins_config)
         self.plugins_persist = true
       end
     except .. as e, m
@@ -652,7 +661,7 @@ class Matter_Device
       dirty = true
     end
     if self.root_passcode == nil
-      self.root_passcode = self.PASSCODE_DEFAULT
+      self.root_passcode = self.generate_random_passcode()
       dirty = true
     end
     if dirty    self.save_param() end
@@ -975,9 +984,9 @@ class Matter_Device
 
     if size(self.plugins) > 0   return end                    # already configured
 
-    var config = self.autoconf_device_map()
-    tasmota.log("MTR: autoconfig = " + str(config), 3)
-    self._load_plugins_config(config)
+    self.plugins_config = self.autoconf_device_map()
+    tasmota.log("MTR: autoconfig = " + str(self.plugins_config), 3)
+    self._load_plugins_config(self.plugins_config)
 
     if !self.plugins_persist && self.sessions.count_active_fabrics() > 0
       self.plugins_persist = true
@@ -990,6 +999,7 @@ class Matter_Device
   #
   # Applies only if there are no plugins already configured
   def autoconf_device_map()
+    import string
     import json
     var m = {}
 
@@ -1017,15 +1027,49 @@ class Matter_Device
       end
     end
 
+    # handle shutters before relays (as we steal relays for shutters)
+    var r_st13 = tasmota.cmd("Status 13", true)     # issue `Status 13`
+    var relays_reserved = []                        # list of relays that are used for non-relay (shutters)
+    tasmota.log("MTR: Status 13 = "+str(r_st13), 3)
+
+    if r_st13.contains('StatusSHT')
+      r_st13 = r_st13['StatusSHT']        # skip root
+      # Shutter is enabled, iterate
+      var idx = 0
+      while true
+        var k = 'SHT' + str(idx)                    # SHT is zero based
+        if !r_st13.contains(k)   break     end           # no more SHTxxx
+        var d = r_st13[k]
+        tasmota.log(string.format("MTR: '%s' = %s", k, str(d)), 3)
+        var relay1 = d.find('Relay1', 0) - 1        # relay base 0 or -1 if none
+        var relay2 = d.find('Relay2', 0) - 1        # relay base 0 or -1 if none
+
+        if relay1 >= 0    relays_reserved.push(relay1)    end   # mark relay1/2 as non-relays
+        if relay2 >= 0    relays_reserved.push(relay2)    end
+
+        tasmota.log(string.format("MTR: relay1 = %s, relay2 = %s", relay1, relay2), 3)
+        # is there tilt support
+        var tilt_array = d.find('TiltConfig')
+        var tilt_config = tilt_array && (tilt_array[2] > 0)
+        # add shutter to definition
+        m[str(endpoint)] = {'type': tilt_config ? 'shutter+tilt' : 'shutter', 'shutter':idx}
+        endpoint += 1
+        idx += 1
+      end
+
+    end
+
     # how many relays are present
     var relay_count = size(tasmota.get_power())
     var relay_index = 0         # start at index 0
     if light_present    relay_count -= 1  end       # last power is taken for lights
 
     while relay_index < relay_count
-      m[str(endpoint)] = {'type':'relay','relay':relay_index}
+      if relays_reserved.find(relay_index) == nil   # if relay is actual relay
+        m[str(endpoint)] = {'type':'relay','relay':relay_index}
+        endpoint += 1
+      end
       relay_index += 1
-      endpoint += 1
     end
 
     # auto-detect sensors
@@ -1097,29 +1141,33 @@ class Matter_Device
   end
 
   #############################################################
-  # plugins_to_json
-  #
-  # Export plugins configuration as a JSON string
-  def plugins_to_json()
-    import string
-    var s = '{'
-    var i = 0
-    while i < size(self.plugins)
-      var pi = self.plugins[i]
-      if i > 0    s += ','    end
-      s += string.format('"%i":%s', pi.get_endpoint(), pi.to_json())
-      i += 1
-    end
-    s += '}'
-    return s
-  end
-
-  #############################################################
   # register_plugin_class
   #
   # Adds a class by name
-  def register_plugin_class(name, cl)
-    self.plugins_classes[name] = cl
+  def register_plugin_class(cl)
+    import introspect
+    var typ = introspect.get(cl, 'TYPE')      # make sure we don't crash if TYPE does not exist
+    if typ
+      self.plugins_classes[typ] = cl
+    end
+  end
+
+  #############################################################
+  # get_plugin_class_displayname
+  #
+  # get a class name light "light0" and return displayname
+  def get_plugin_class_displayname(name)
+    var cl = self.plugins_classes.find(name)
+    return cl ? cl.NAME : ""
+  end
+
+  #############################################################
+  # get_plugin_class_arg
+  #
+  # get a class name light "light0" and return the name of the json argumen (or empty)
+  def get_plugin_class_arg(name)
+    var cl = self.plugins_classes.find(name)
+    return cl ? cl.ARG : ""
   end
 
   #############################################################
@@ -1127,16 +1175,15 @@ class Matter_Device
   #
   # Adds a class by name
   def register_native_classes(name, cl)
-    self.register_plugin_class('root',          matter.Plugin_Root)
-    self.register_plugin_class('light0',        matter.Plugin_Light0)
-    self.register_plugin_class('light1',        matter.Plugin_Light1)
-    self.register_plugin_class('light2',        matter.Plugin_Light2)
-    self.register_plugin_class('light3',        matter.Plugin_Light3)
-    self.register_plugin_class('relay',         matter.Plugin_OnOff)
-    self.register_plugin_class('temperature',   matter.Plugin_Sensor_Temp)
-    self.register_plugin_class('humidity',      matter.Plugin_Sensor_Humidity)
-    self.register_plugin_class('illuminance',   matter.Plugin_Sensor_Illuminance)
-    self.register_plugin_class('pressure',      matter.Plugin_Sensor_Pressure)
+    # try to register any class that starts with 'Plugin_'
+    import introspect
+    import string
+    for k: introspect.members(matter)
+      var v = introspect.get(matter, k)
+      if type(v) == 'class' && string.find(k, "Plugin_") == 0
+        self.register_plugin_class(v)
+      end
+    end
     tasmota.log("MTR: registered classes "+str(self.k2l(self.plugins_classes)), 3)
   end
   
@@ -1148,6 +1195,23 @@ class Matter_Device
     if self.sessions.count_active_fabrics() > 0 && !self.plugins_persist
       self.plugins_persist = true
       self.save_param()
+    end
+  end
+
+  #####################################################################
+  # Generate random passcode
+  #####################################################################
+  static var PASSCODE_INVALID = [ 0, 11111111, 22222222, 33333333, 44444444, 55555555, 66666666, 77777777, 88888888, 99999999, 12345678, 87654321]
+  def generate_random_passcode()
+    import crypto
+    var passcode
+    while true
+      passcode = crypto.random(4).get(0, 4) & 0x7FFFFFF
+      if passcode > 0x5F5E0FE     continue      end         # larger than allowed
+      for inv: self.PASSCODE_INVALID
+        if passcode == inv    passcode = nil    end
+      end
+      if passcode != nil    return passcode     end
     end
   end
 
