@@ -7,9 +7,14 @@
 ********************************************************************/
 #include "be_object.h"
 #include "be_mem.h"
+#include "be_lexer.h"
 #include <string.h>
+#include <math.h>
 
 #if BE_USE_JSON_MODULE
+
+#define is_space(c)     ((c) == ' ' || (c) == '\t' || (c) == '\r' || (c) == '\n')
+#define is_digit(c)     ((c) >= '0' && (c) <= '9')
 
 #define MAX_INDENT      24
 #define INDENT_WIDTH    2
@@ -26,11 +31,6 @@ static const char* skip_space(const char *s)
         ++s;
     }
     return s;
-}
-
-static int is_digit(int c)
-{
-    return c >= '0' && c <= '9';
 }
 
 static const char* match_char(const char *json, int ch)
@@ -115,38 +115,6 @@ static const char* parser_null(bvm *vm, const char *json)
     return NULL;
 }
 
-static char* load_unicode(char *dst, const char *json)
-{
-    int ucode = 0, i = 4;
-    while (i--) {
-        int ch = *json++;
-        if (ch >= '0' && ch <= '9') {
-            ucode = (ucode << 4) | (ch - '0');
-        } else if (ch >= 'A' && ch <= 'F') {
-            ucode = (ucode << 4) | (ch - 'A' + 0x0A);
-        } else if (ch >= 'a' && ch <= 'f') {
-            ucode = (ucode << 4) | (ch - 'a' + 0x0A);
-        } else {
-            return NULL;
-        }
-    }
-    /* convert unicode to utf8 */
-    if (ucode < 0x007F) {
-        /* unicode: 0000 - 007F -> utf8: 0xxxxxxx */
-        *dst++ = (char)(ucode & 0x7F);
-    } else if (ucode < 0x7FF) {
-        /* unicode: 0080 - 07FF -> utf8: 110xxxxx 10xxxxxx */
-        *dst++ = (char)(((ucode >> 6) & 0x1F) | 0xC0);
-        *dst++ = (char)((ucode & 0x3F) | 0x80);
-    } else {
-        /* unicode: 0800 - FFFF -> utf8: 1110xxxx 10xxxxxx 10xxxxxx */
-        *dst++ = (char)(((ucode >> 12) & 0x0F) | 0xE0);
-        *dst++ = (char)(((ucode >> 6) & 0x03F) | 0x80);
-        *dst++ = (char)((ucode & 0x3F) | 0x80);
-    }
-    return dst;
-}
-
 static const char* parser_string(bvm *vm, const char *json)
 {
     if (*json == '"') {
@@ -168,7 +136,7 @@ static const char* parser_string(bvm *vm, const char *json)
                     case 'r': *dst++ = '\r'; break;
                     case 't': *dst++ = '\t'; break;
                     case 'u': { /* load unicode */
-                        dst = load_unicode(dst, json);
+                        dst = be_load_unicode(dst, json);
                         if (dst == NULL) {
                             be_free(vm, buf, len);
                             return NULL;
@@ -279,90 +247,114 @@ static const char* parser_array(bvm *vm, const char *json)
     return json;
 }
 
+enum {
+    JSON_NUMBER_INVALID = 0,
+    JSON_NUMBER_INTEGER = 1,
+    JSON_NUMBER_REAL = 2
+};
+
+int check_json_number(const char *json) {
+    if (!json || *json == '\0') {
+        return JSON_NUMBER_INVALID;
+    }
+    
+    const char *p = json;
+    bbool has_fraction = bfalse;
+    bbool has_exponent = bfalse;
+    
+    // Skip leading whitespace
+    while (is_space(*p)) {
+        p++;
+    }
+    
+    if (*p == '\0') {
+        return JSON_NUMBER_INVALID;
+    }
+    
+    // Handle optional minus sign
+    if (*p == '-') {
+        p++;
+        if (*p == '\0') {
+            return JSON_NUMBER_INVALID;
+        }
+    }
+    
+    // Integer part
+    if (*p == '0') {
+        // If starts with 0, next char must not be a digit (unless it's decimal point or exponent)
+        p++;
+        if (is_digit(*p)) {
+            return JSON_NUMBER_INVALID; // Leading zeros not allowed (except standalone 0)
+        }
+    } else if (is_digit(*p)) {
+        // First digit must be 1-9, then any digits
+        p++;
+        while (is_digit(*p)) {
+            p++;
+        }
+    } else {
+        return JSON_NUMBER_INVALID; // Must start with digit
+    }
+    
+    // Optional fractional part
+    if (*p == '.') {
+        has_fraction = btrue;
+        p++;
+        if (!is_digit(*p)) {
+            return JSON_NUMBER_INVALID; // Must have at least one digit after decimal point
+        }
+        while (is_digit(*p)) {
+            p++;
+        }
+    }
+    
+    // Optional exponent part
+    if (*p == 'e' || *p == 'E') {
+        has_exponent = btrue;
+        p++;
+        // Optional sign in exponent
+        if (*p == '+' || *p == '-') {
+            p++;
+        }
+        if (!is_digit(*p)) {
+            return JSON_NUMBER_INVALID; // Must have at least one digit in exponent
+        }
+        while (is_digit(*p)) {
+            p++;
+        }
+    }
+    
+    // Number ends here - check that next char is not a continuation
+    // Valid JSON number termination: whitespace, null, or JSON delimiters
+    if (*p != '\0' && !is_space(*p) && *p != ',' && *p != ']' && *p != '}' && *p != ':') {
+        return JSON_NUMBER_INVALID;
+    }
+    
+    // Determine return value based on what was found
+    // Any number with exponent (e/E) is always real, regardless of fractional part
+    if (has_exponent || has_fraction) {
+        return JSON_NUMBER_REAL; // real number
+    } else {
+        return JSON_NUMBER_INTEGER; // integer
+    }
+}
+
 static const char* parser_number(bvm *vm, const char *json)
 {
-    char c = *json++;
-    bbool is_neg = c == '-';
-    if(is_neg) {
-        c = *json++;
-        if(!is_digit(c)) {
-            /* minus must be followed by digit */
-            return NULL;
-        }
+    const char *endstr = NULL;
+    int number_type = check_json_number(json);
+    
+    switch (number_type) {
+    case JSON_NUMBER_INTEGER:
+        be_pushint(vm, be_str2int(json, &endstr));
+        break;
+    case JSON_NUMBER_REAL:
+        be_pushreal(vm, be_str2real(json, &endstr));
+        break;
+    default:
+        endstr = NULL;
     }
-    bint intv = 0;
-    if(c != '0') {
-        /* parse integer part */
-        while(is_digit(c)) {
-            intv = intv * 10 + c - '0';
-            c = *json++;
-        }
-
-    } else {
-        /* 
-            Number starts with zero, this is only allowed  
-            if the number is just '0' or 
-            it has a fractional part or exponent.
-        */
-       c = *json++;
-
-    }
-    if(c != '.' && c != 'e' && c != 'E') {
-        /* 
-           No fractional part or exponent follows, this is an integer.
-           If digits follow after it (for example due to a leading zero) 
-           this will cause an error in the calling function.
-        */
-        be_pushint(vm, intv * (is_neg ? -1 : 1));
-        json--;
-        return json;
-    }
-    breal realval = (breal) intv;
-    if(c == '.') {
-
-        breal deci = 0.0, point = 0.1;
-        /* fractional part */
-        c = *json++;
-        if(!is_digit(c)) {
-            /* decimal point must be followed by digit */
-            return NULL;
-        }
-        while (is_digit(c)) {
-            deci = deci + ((breal)c - '0') * point;
-            point *= (breal)0.1;
-            c = *json++;
-        }
-
-        realval += deci;
-    }
-    if(c == 'e' || c == 'E') {
-        c = *json++;
-        /* exponent part */
-        breal ratio = c == '-' ? (breal)0.1 : 10;
-        if (c == '+' || c == '-') {
-            c = *json++;
-            if(!is_digit(c)) {
-                return NULL;
-            }
-        }
-        if(!is_digit(c)) {
-            /* e and sign must be followed by digit */
-            return NULL;
-        }
-        unsigned int e = 0;
-        while (is_digit(c)) {
-            e = e * 10 + c - '0';
-            c = *json++;
-        }
-        /* e > 0 must be here to prevent infinite loops when e overflows */
-        while (e--) {
-            realval *= ratio;
-        }
-   }
-
-   be_pushreal(vm, realval * (is_neg ? -1.0 : 1.0));
-   json--;
-   return json;
+    return endstr;
 }
 
 /* parser json value */
@@ -515,6 +507,15 @@ static void value_dump(bvm *vm, int *indent, int idx, int fmt)
     } else if (be_isnil(vm, idx)) { /* convert to json null */
         be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
         be_pushstring(vm, "null");
+    } else if (be_isreal(vm, idx)) {
+        be_stack_require(vm, 1 + BE_STACK_FREE_MIN);
+        breal v = be_toreal(vm, idx);
+        if (isnan(v) || isinf(v)) {
+            be_pushstring(vm, "null");
+        } else {
+            be_tostring(vm, idx);
+            be_pushvalue(vm, idx); /* push to top */
+        };
     } else if (be_isnumber(vm, idx) || be_isbool(vm, idx)) { /* convert to json number and boolean */
         be_stack_require(vm, 1 + BE_STACK_FREE_MIN); 
         be_tostring(vm, idx);

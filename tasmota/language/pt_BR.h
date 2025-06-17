@@ -52,12 +52,17 @@
 
 // Common
 #define D_ABSOLUTE_HUMIDITY "Abs Humidity"
+#define D_ADDRESS "Address"
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "Qualidade do ar"
 #define D_AP "Ponto de acesso"     	// Ponto de Acesso
 #define D_AS "como"
+#define D_AT "at"
 #define D_AUTO "Auto"
+#define D_AUTO_UPDATE "Auto Update"
+#define D_BATTERY "Battery"
 #define D_BATT "Bat"                // Short for Battery
+#define D_BATTERY_CHARGE "Charge"  // Battery charge in %
 #define D_BLINK "Piscar"
 #define D_BLINKOFF "Piscar desligado"
 #define D_BOOT_COUNT "Contagem de inicialização"
@@ -74,6 +79,7 @@
 #define D_COMMAND "Comando"
 #define D_CONNECTED "Ligado"
 #define D_CORS_DOMAIN "Domínio CORS"
+#define D_COLOR "Color"
 #define D_COUNT "Contagem"
 #define D_COUNTER "Contador"
 #define D_CT_POWER "Carga CT"
@@ -84,9 +90,7 @@
 #define D_DEBUG "Depurar"
 #define D_DEWPOINT "Ponto de orvalho"
 #define D_DISABLED "Desabilitado"
-#define D_MOVING_DISTANCE "Moving Distance"
-#define D_STATIC_DISTANCE "Static Distance"
-#define D_DETECT_DISTANCE "Detect Distance"
+#define D_DISCONNECTED "Disconnected"
 #define D_DISTANCE "Distância"
 #define D_DNS_SERVER "Servidor DNS"
 #define D_DO "Oxigênio dissolvido"
@@ -117,6 +121,7 @@
 #define D_GROUP "Grupo"
 #define D_HOST "Host"
 #define D_HALL_EFFECT "Efeito Hall"
+#define D_HEATINDEX "Heat index"
 #define D_HOSTNAME "Nome do Host"
 #define D_HUMIDITY "Umidade"
 #define D_ILLUMINANCE "Luminância"
@@ -151,6 +156,7 @@
 #define D_POWER_FACTOR "Fator de potência"
 #define D_POWERUSAGE "Potência"
 #define D_POWERUSAGE_ACTIVE "Potência ativa"
+#define D_POWERUSAGE_ACTIVE_TOTAL "Active Power Total"
 #define D_POWERUSAGE_APPARENT "Potência aparente"
 #define D_POWERUSAGE_REACTIVE "Potência reativa"
 #define D_PRESSURE "Pressão"
@@ -164,7 +170,6 @@
 #define D_RESTART "Reiniciar"
 #define D_RESTARTING "Reiniciando"
 #define D_RESTART_REASON "Motivo do reinício"
-#define D_RESTORE "Restauração"
 #define D_RETAINED "Manter"
 #define D_RULE "Regra"
 #define D_SAVE "Salvar"
@@ -187,7 +192,9 @@
 #define D_TRANSMIT "Transmitir"
 #define D_TRUE "Verdadeiro"
 #define D_TVOC "TVOC"
-#define D_UPGRADE "atualização"
+#define D_TWILIGHT_ASTRONOMICAL "Astronomical"
+#define D_TWILIGHT_CIVIL "Civil"
+#define D_TWILIGHT_NAUTICAL "Nautical"
 #define D_UPLOAD "Enviar"
 #define D_UPTIME "Tempo de atividade"
 #define D_USED "used"
@@ -212,6 +219,7 @@
 #define D_WEB_SERVER "Servidor WEB"
 #define D_SOC "Estado de Carga"
 #define D_SOH "Estado de Saúde"
+#define D_WATER_DEPTH "Profundidade da água"
 
 // tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "AVISO: esta versão não supporta configurações persistentes"
@@ -271,7 +279,8 @@
 #define D_CONFIGURATION "Configuração"
 #define D_INFORMATION "Informação"
 #define D_FIRMWARE_UPGRADE "Atualização de firmware"
-#define D_MANAGEMENT "Consoles"
+#define D_MANAGEMENT "Tools"
+#define D_GPIO_VIEWER "GPIO Viewer"
 #define D_CONSOLE "Console"
 #define D_CONFIRM_RESTART "Confirmar o reinicio"
 
@@ -285,6 +294,7 @@
 #define D_RESET_CONFIGURATION "Apagar configuração"
 #define D_BACKUP_CONFIGURATION "Salvar configuração"
 #define D_RESTORE_CONFIGURATION "Repor configuração"
+#define D_START_RESTORE "Start restore"
 #define D_MAIN_MENU "Menu principal"
 
 #define D_MODULE_PARAMETERS "Parâmetros do módulo"
@@ -302,6 +312,7 @@
 #define D_REFRESH_TO_SCAN_AGAIN "Nova busca"
 #define D_DUPLICATE_ACCESSPOINT "Ponto de Acesso duplicado"
 #define D_SKIPPING_LOW_QUALITY "Ignorado devido à baixa qualidade do sinal"
+#define D_MODE "Mode"
 #define D_RSSI "RSSI"
 #define D_WEP "WEP"
 #define D_WPA_PSK "WPA PSK"
@@ -528,6 +539,11 @@
 #define D_ENERGY_YESTERDAY "Consumo energético de ontem"
 #define D_ENERGY_TOTAL "Consumo total de energia"
 
+// xsns_100_ina3221.ino
+#define  D_UNIT_CHARGE                    "Ah"
+#define  D_CHARGE                         "Charge"    
+#define  D_ENERGY                         "Energy"
+
 // xdrv_27_shutter.ino
 #define D_OPEN "Aberta"
 #define D_CLOSE "Fechada"
@@ -540,6 +556,31 @@
 #define D_DEVICE "Dispositivo"
 #define D_DEVICE_INPUT "Entrada"
 #define D_DEVICE_OUTPUT "Saída"
+
+// xdrv_39_thermostat.ino, xdrv_85_esp32_ble_eq3_trv.ino
+#define D_THERMOSTAT                  "Thermostat"
+#define D_THERMOSTAT_SET_POINT        "Set Point Temperature"
+#define D_THERMOSTAT_SENSOR           "Current Temperature"
+#define D_THERMOSTAT_GRADIENT         "Gradient Temperature"
+#define D_THERMOSTAT_DUTY_CYCLE       "Duty cycle"
+#define D_THERMOSTAT_VALVE_POSITION   "Valve Position"
+#define D_THERMOSTAT_CYCLE_TIME       "Cycle time"
+#define D_THERMOSTAT_PI_AUTOTUNE      "PI Auto tuning"
+#define D_THERMOSTAT_CONTROL_METHOD   "Control method"
+#define D_THERMOSTAT_RAMP_UP          "Ramp up"
+#define D_THERMOSTAT_PI               "PI"
+#define D_THERMOSTAT_AUTOTUNE         "Autotune"
+#define D_THERMOSTAT_RAMP_UP_HYBRID   "Ramp up (Hybrid)"
+#define D_THERMOSTAT_PI_HYBRID        "PI (Hybrid)"
+#define D_THERMOSTAT_AUTOTUNE_HYBRID  "Autotune (Hybrid)"
+
+// xdrv_79_esp32_ble.ino
+#define D_CONFIGURE_BLE "Configure BLE"
+#define D_BLE_PARAMETERS "Bluetooth Settings"
+#define D_BLE_ENABLE "Enable Bluetooth"
+#define D_BLE_ACTIVESCAN "Enable Active Scan(*)"
+#define D_BLE_DEVICES "Devices Seen"
+#define D_BLE_REMARK "items marked (*) are not stored in config"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor ocupado"
@@ -633,6 +674,24 @@
 #define D_SIGNALSTRENGTH "Força do sinal"
 #define D_CHIPTEMPERATURE "Temperatura do CHIP"
 
+// xsns_60_GPS
+#define D_LATITUDE             "Latitude"
+#define D_LONGITUDE            "Longitude"
+#define D_HORIZONTAL_ACCURACY  "Horizontal Accuracy"
+#define D_ALTITUDE             "Altitude"
+#define D_VERTICAL_ACCURACY    "Vertical Accuracy"
+#define D_SPEED                "Speed"
+#define D_SPEED_ACCURACY       "Speed Accuracy"
+#define D_HEADING              "Heading"
+#define D_HEADING_ACCURACY     "Heading Accuracy"
+#define D_SAT_FIX              "Satellite Fix"
+  #define D_SAT_FIX_NO_FIX     "None"
+  #define D_SAT_FIX_DEAD_RECK  "Dead reckoning"
+  #define D_SAT_FIX_2D         "2D"
+  #define D_SAT_FIX_3D         "3D"
+  #define D_SAT_FIX_GPS_DEAD   "GPS and dead reckoning"
+  #define D_SAT_FIX_TIME       "Time only fix"
+
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Nenhum"
 #define D_SENSOR_USER          "Usuário"
@@ -644,6 +703,8 @@
 #define D_SENSOR_DS18X20       "DS18x20"
 #define D_SENSOR_I2C_SCL       "I2C SCL"
 #define D_SENSOR_I2C_SDA       "I2C SDA"
+#define D_SENSOR_I2C_SER_TX    "I2C Ser TX"
+#define D_SENSOR_I2C_SER_RX    "I2C Ser RX"
 #define D_SENSOR_I2S_MCLK      "I2S MCLK"
 #define D_SENSOR_I2S_BCLK      "I2S BCLK"
 #define D_SENSOR_I2S_WS_IN     "I2S BCLK IN"
@@ -651,6 +712,8 @@
 #define D_SENSOR_I2S_BCLK_IN   "I2S WS IN"
 #define D_SENSOR_I2S_DIN       "I2S DIN"
 #define D_SENSOR_I2S_DOUT      "I2S DOUT"
+#define D_SENSOR_I2S_DAC       "I2S DAC"
+#define D_SENSOR_HDMI_CEC      "HDMI CEC"
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 Player"
 #define D_SENSOR_DFR562_BUSY   "MP3 Busy"
@@ -667,6 +730,7 @@
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
 #define D_SENSOR_MHZ_TX        "MHZ Tx"
+#define D_SENSOR_HC8_RX        "HC8 Rx"
 #define D_SENSOR_PZEM004_RX    "PZEM004 Rx"
 #define D_SENSOR_PZEM016_RX    "PZEM016 Rx"
 #define D_SENSOR_PZEM017_RX    "PZEM017 Rx"
@@ -678,6 +742,10 @@
 #define D_SENSOR_SPI_MISO      "SPI MISO"
 #define D_SENSOR_SPI_MOSI      "SPI MOSI"
 #define D_SENSOR_SPI_CLK       "SPI CLK"
+#define D_SENSOR_SDIO_CMD      "SDIO CMD"
+#define D_GPIO_TS_SPI_CS       "TS SPI CS"
+#define D_GPIO_TS_RST          "TS RST"
+#define D_GPIO_TS_IRQ          "TS IRQ"
 #define D_SENSOR_SDIO_CMD      "SDIO CMD"
 #define D_SENSOR_SDIO_CLK      "SDIO CLK"
 #define D_SENSOR_SDIO_D0       "SDIO D0"
@@ -711,8 +779,12 @@
 #define D_SENSOR_SDM630_RX     "SDM630 Rx"
 #define D_SENSOR_WE517_TX      "WE517 Tx"
 #define D_SENSOR_WE517_RX      "WE517 Rx"
+#define D_SENSOR_LD2402_TX     "LD2402 Tx"
+#define D_SENSOR_LD2402_RX     "LD2402 Rx"
 #define D_SENSOR_LD2410_TX     "LD2410 Tx"
 #define D_SENSOR_LD2410_RX     "LD2410 Rx"
+#define D_SENSOR_LD2410S_TX     "LD2410S Tx"
+#define D_SENSOR_LD2410S_RX     "LD2410S Rx"
 #define D_GPIO_TM1621_CS       "TM1621 CS"
 #define D_GPIO_TM1621_WR       "TM1621 WR"
 #define D_GPIO_TM1621_RD       "TM1621 RD"
@@ -722,6 +794,8 @@
 #define D_SENSOR_TM1638_CLK    "TM1638 CLK"
 #define D_SENSOR_TM1638_DIO    "TM1638 DIO"
 #define D_SENSOR_TM1638_STB    "TM1638 STB"
+#define D_SENSOR_TM1640_CLK    "TM1640 CLK"
+#define D_SENSOR_TM1640_DIN    "TM1640 DIN"
 #define D_SENSOR_MAX7219_DIN    "MAX7219 DIN"
 #define D_SENSOR_MAX7219_CS    "MAX7219 CS"
 #define D_SENSOR_MAX7219_CLK    "MAX7219 CLK"
@@ -749,6 +823,15 @@
 #define D_SENSOR_MAX31855_CLK  "MX31855 CLK"
 #define D_SENSOR_MAX31855_DO   "MX31855 DO"
 #define D_SENSOR_MAX31865_CS   "MX31865 CS"
+#define D_GPIO_RN2XX3_TX       "RN2XX3 Tx"
+#define D_GPIO_RN2XX3_RX       "RN2XX3 Rx"
+#define D_GPIO_RN2XX3_RST      "RN2XX3 Rst"
+#define D_GPIO_ASR650X_TX      "ASR650x Tx"
+#define D_GPIO_ASR650X_RX      "ASR650x Rx"
+#define D_GPIO_LORA_CS         "LoRa CS"
+#define D_GPIO_LORA_RST        "LoRa Rst"
+#define D_GPIO_LORA_BUSY       "LoRa Busy"
+#define D_GPIO_LORA_DI         "LoRa DIO"    // Suffix "0","1","2"
 #define D_SENSOR_NRG_SEL       "HLWBL SEL"  // Suffix "i"
 #define D_SENSOR_NRG_CF1       "HLWBL CF1"
 #define D_SENSOR_HLW_CF        "HLW8012 CF"
@@ -760,6 +843,7 @@
 #define D_SENSOR_CSE7761_RX    "CSE7761 Rx"
 #define D_SENSOR_CSE7766_TX    "CSE7766 Tx"
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
+#define D_SENSOR_BL0906_RX     "BL0906 Rx"
 #define D_SENSOR_BL0939_RX     "BL0939 Rx"
 #define D_SENSOR_BL0942_RX     "BL0942 Rx"
 #define D_SENSOR_HM330X_SET    "HM330X SET"
@@ -848,6 +932,8 @@
 #define D_SENSOR_ADC_JOYSTICK  "Joystick ADC"
 #define D_SENSOR_ADC_PH        "pH ADC"
 #define D_SENSOR_ADC_MQ        "ADC MQ"
+#define D_SENSOR_ADC_VOLTAGE   "ADC Voltage"
+#define D_SENSOR_ADC_CURRENT   "ADC Current"
 #define D_GPIO_WEBCAM_PWDN     "CAM_PWDN"
 #define D_GPIO_WEBCAM_RESET    "CAM_RESET"
 #define D_GPIO_WEBCAM_XCLK     "CAM_XCLK"
@@ -864,6 +950,7 @@
 #define D_SENSOR_ETH_PHY_MDC   "ETH MDC"
 #define D_SENSOR_ETH_PHY_MDIO  "ETH MDIO"
 #define D_SENSOR_TCP_TXD       "TCP Tx"
+#define D_SENSOR_TCP_TXD_EN    "TCP Tx En"
 #define D_SENSOR_TCP_RXD       "TCP Rx"
 #define D_SENSOR_IEM3000_TX    "iEM3000 TX"
 #define D_SENSOR_IEM3000_RX    "iEM3000 RX"
@@ -929,10 +1016,18 @@
 #define D_SENSOR_ME007_RX      "ME007 Rx"
 #define D_SENSOR_TUYAMCUBR_TX  "TuyaMCUBr Tx"
 #define D_SENSOR_TUYAMCUBR_RX  "TuyaMCUBr Rx"
+#define D_SENSOR_TWAI_TX       "TWAI Tx"
+#define D_SENSOR_TWAI_RX       "TWAI Rx"
+#define D_SENSOR_TWAI_BO       "TWAI BusOff"
+#define D_SENSOR_TWAI_CLK      "TWAI ClkOut"
 #define D_SENSOR_BIOPDU_PZEM0XX_TX "BioPDU PZEM0XX Tx"
 #define D_SENSOR_BIOPDU_PZEM016_RX "BioPDU PZEM016 Rx"
 #define D_SENSOR_BIOPDU_BIT    "BioPDU Bit"
 #define D_SENSOR_LOX_O2_RX     "LoxO2 RX"
+#define D_GPIO_MAGIC_SWITCH    "MagicSwitch"
+#define D_SENSOR_WOOLIIS_RX    "Wooliis Rx"
+#define D_SENSOR_C8_CO2_5K_RX  "C8-CO2-5K Rx"
+#define D_SENSOR_C8_CO2_5K_TX  "C8-CO2-5K Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -957,6 +1052,7 @@
 #define D_UNIT_LITERS "L"
 #define D_UNIT_LITERS_PER_MIN "L/m"
 #define D_UNIT_LUX "lx"
+#define D_UNIT_METER "m"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
@@ -978,7 +1074,7 @@
 #define D_UNIT_SECOND "s"
 #define D_UNIT_SECTORS "setores"
 #define D_UNIT_VA "VA"
-#define D_UNIT_VAR "VAr"
+#define D_UNIT_VAR "var"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "W/h"
@@ -1000,7 +1096,7 @@
 #define D_IMPORT_REACTIVE "Importar Reativo"
 #define D_EXPORT_REACTIVE "Exportar Reativo"
 #define D_TOTAL_REACTIVE  "Reativo total"
-#define D_UNIT_KWARH      "kVArh"
+#define D_UNIT_KWARH      "kvarh"
 #define D_UNIT_ANGLE      "Deg"
 #define D_TOTAL_ACTIVE    "Total Ativo"
 #define D_RESETTABLE_TOTAL_ACTIVE    "Total Activo (RST)"
@@ -1127,6 +1223,13 @@
 #define D_FP_PASSVERIFY "Senha verificada"    // 0x21 Verify the fingerprint passed
 #define D_FP_UNKNOWNERROR "Erro"              // Any other error
 
+// xsns_90_hrg15.ino
+#define D_HRG_VALID "Valid"
+#define D_HRG_ACTIVE "Active"
+#define D_HRG_EVENT "Event"
+#define D_HRG_TOTAL "Total"
+#define D_HRG_FLOWRATE "Flow Rate"
+
 // xsns_96_flowratemeter.ino
 #define D_FLOWRATEMETER_NAME "Flowrate"
 #define D_FLOWRATEMETER_AMOUNT_TODAY "Amount Today"
@@ -1196,5 +1299,28 @@
 // xsns_106_gdk101.ino
 #define D_AVG_RAD_DOSE                    "dose média de radiação"
 #define D_UNIT_US_H                       "µSv/h"
+
+// ixrv92_pipsolar.ino
+#define D_SENSOR_PIPSOLAR_TX             "Pipsolar TX"
+#define D_SENSOR_PIPSOLAR_RX             "Pipsolar RX"
+
+// xsns_102_ld2410.ino
+#define D_MOVING_DISTANCE "Moving Distance"
+#define D_STATIC_DISTANCE "Static Distance"
+#define D_DETECT_DISTANCE "Detect Distance"
+#define D_MOVING_ENERGY_T "Moving target"
+#define D_STATIC_ENERGY_T "Static target"
+#define D_LD2410_PIN_STATE "Output pin state"
+#define D_LD2410_LIGHT "Light sensor"
+
+// xsns_115_wooliis.ino
+#define D_IMPORT                          "Import"
+#define D_EXPORT                          "Export"
+#define D_CHARGING                        "Charging"
+#define D_CAPACITY                        "Capacity"
+
+// xnrg_25_v9240.ino
+#define D_SENSOR_V9240_TX "V9240 TX"
+#define D_SENSOR_V9240_RX "V9240 RX"
 
 #endif  // _LANGUAGE_PT_BR_H_
